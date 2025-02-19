@@ -5,8 +5,6 @@
   "scripts": {
     "start": "node server.js"
   },
-
-{
   "devDependencies": {
     "prisma": "^6.4.0"
   },
