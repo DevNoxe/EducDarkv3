@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EducaDark</title>
+  <style>
+    /* Estilos generales */
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-image: url('fondo.jpg');
+      background-size: cover;
+      background-position: center;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Barra de navegación */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      display: none; /* Inicialmente oculta */
+    }
+
+    .navbar h1 {
+      margin: 0;
+    }
+
+    /* Estilos del menú hamburguesa */
+    .hamburger {
+      display: block;
+      cursor: pointer;
+    }
+
+    .hamburger div {
+      width: 25px;
+      height: 3px;
+      background-color: white;
+      margin: 4px 0;
+    }
+
+    /* Menú lateral oculto */
+    .menu {
+      display: none; /* Inicialmente oculta */
+      position: fixed;
+      top: 0;
+      right: -250px; /* Colocar fuera de la pantalla inicialmente */
+      background-color: rgba(0, 0, 0, 0.9);
+      color: white;
+      width: 250px;
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+      transition: transform 0.3s ease;
+    }
+
+    .menu.show {
+      display: block;
+      transform: translateX(-250px); /* Mueve el menú para que sea visible */
+    }
+
+    .menu a {
+      color: white;
+      text-decoration: none;
+      display: block;
+      margin: 10px 0;
+    }
+
+    .menu a:hover {
+      text-decoration: underline;
+    }
+
+    .menu input {
+      margin: 5px;
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    .sugerencias {
+      max-height: 150px;
+      overflow-y: auto;
+      background-color: white;
+      color: black;
+      position: absolute;
+      width: 90%;
+      border-radius: 5px;
+      margin-top: 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .sugerencias div {
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .sugerencias div:hover {
+      background-color: #ddd;
+    }
+
+    /* Contenedor de búsqueda */
+    .contenedor-busqueda {
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      margin-top: 60px;
+      display: none; /* Inicialmente oculta */
+    }
+
+    input, button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 16px;
+      width: 250px;
+    }
+
+    #resultado {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 300px;
+      text-align: left;
+    }
+
+    /* Formulario de Login */
+    .login-form {
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #loginMessage {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nuevo Formulario de Login -->
+<div id="loginForm" class="login-form">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Usuario" />
+    <input type="password" id="password" placeholder="Contraseña" />
+    <button type="button" onclick="handleLogin()">Ingresar</button>
+    <div id="loginMessage"></div>
+  </div>
+
+  <!-- Barra de Navegación -->
+  <div class="navbar" id="navbar">
+    <h1>EducaDark</h1>
+    <div class="hamburger" onclick="toggleMenu()">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  </div>
+
+  <!-- Menú lateral -->
+  <div class="menu" id="menu">
+    <h3>Profesores Registrados</h3>
+    <div id="empleadosLista"></div>
+    <hr>
+    <h3>Buscar Profesor</h3>
+    <input type="text" id="buscarEmpleadoInput" placeholder="Buscar por nombre o correo" oninput="mostrarSugerencias(this, 'menu')" />
+    <div id="sugerenciasMenu" class="sugerencias"></div>
+    <button onclick="buscarEmpleadoMenu()">Buscar</button>
+    <div id="resultadoBusqueda"></div>
+  </div>
+
+  <!-- Contenedor de búsqueda -->
+  <div class="contenedor-busqueda" id="contenedor-busqueda">
+    <input id="busqueda" placeholder="Ingrese el correo de educacyl" oninput="mostrarSugerencias(this, 'principal')" />
+    <div id="sugerenciasPrincipal" class="sugerencias"></div>
+    <button onclick="buscarEmpleado()">Buscar</button>
+    <button onclick="limpiarResultados()">Clear</button>
+  </div>
+
+  <div id="resultado"></div>
+
+  <script>
+    // Manejo del Login
+    async function handleLogin() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      const response = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        document.getElementById('loginMessage').textContent = 'Login exitoso';
+        localStorage.setItem('token', result.token);  // Guardar el token
+        document.getElementById('loginForm').style.display = 'none';  // Ocultar el formulario de login
+        document.getElementById('navbar').style.display = 'flex';  // Mostrar la barra de navegación
+        document.getElementById('contenedor-busqueda').style.display = 'block';  // Mostrar la funcionalidad de búsqueda
+      } else {
+        document.getElementById('loginMessage').textContent = 'Credenciales incorrectas';
+      }
+    }
+
+    // Validación de login en la función de búsqueda
+    function buscarEmpleado() {
+      if (!localStorage.getItem('token')) {
+        alert("Debes iniciar sesión primero.");
+        return;
+      }
+
+      const busqueda = limpiarTexto(document.getElementById('busqueda').value.trim());
+      const empleado = empleados.find(e => 
+        e.correoEduca.toLowerCase().includes(busqueda)
+      );
+
+      const resultado = document.getElementById('resultado');
+      resultado.innerHTML = empleado ? 
+        `<strong>Nombre completo:</strong> ${empleado.apellidos}, ${empleado.nombre}<br>
+         <strong>Correo Personal:</strong> ${empleado.correoPersonal}<br>
+         <strong>Centro Educativo:</strong> ${empleado.centro}<br>
+         <strong>ID Centro:</strong> ${empleado.idCentro}<br>
+         <strong>Correo EDUCA:</strong> ${empleado.correoEduca}` : 
+        'Empleado no encontrado';
+    }
+
+    // Limpiar resultados
+    function limpiarResultados() {
+      document.getElementById('busqueda').value = '';
+      document.getElementById('resultado').innerHTML = '';
+    }
+
+    // Toggle de menú hamburguesa
+    function toggleMenu() {
+      if (!localStorage.getItem('token')) {
+        alert("Debes iniciar sesión primero.");
+        return;
+      }
+
+      const menu = document.getElementById('menu');
+      menu.classList.toggle('show');
+      mostrarEmpleados();
+    }
+
+    // Mostrar empleados solo si el usuario está autenticado
+    function mostrarEmpleados() {
+      if (!localStorage.getItem('token')) {
+        alert("Debes iniciar sesión primero.");
+        return;
+      }
+
+      const empleadosLista = document.getElementById('empleadosLista');
+      empleadosLista.innerHTML = empleados.map(e => 
+        `<div>${e.apellidos}, ${e.nombre}: ${e.correoEduca}</div>` 
+      ).join('');
+    }
+
+    // Función para mostrar sugerencias de autocompletado
+    function mostrarSugerencias(inputElement, tipo) {
+      if (!localStorage.getItem('token')) {
+        alert("Debes iniciar sesión primero.");
+        return;
+      }
+
+      const input = inputElement.value.toLowerCase();
+      const sugerenciasId = tipo === 'menu' ? 'sugerenciasMenu' : 'sugerenciasPrincipal';
+      const sugerencias = document.getElementById(sugerenciasId);
+      sugerencias.innerHTML = '';
+
+      let resultados = [];
+
+      if (tipo === 'menu') {
+        // Autocompletado para el menú lateral (nombre, apellidos o correo)
+        resultados = empleados.filter(e => 
+          limpiarTexto(e.nombre + ' ' + e.apellidos).includes(input) || 
+          e.correoEduca.toLowerCase().includes(input)
+        );
+      } else {
+        // Autocompletado para la búsqueda principal (correo)
+        resultados = empleados.filter(e => 
+          e.correoEduca.toLowerCase().includes(input)
+        );
+      }
+
+      resultados.forEach(resultado => {
+        const div = document.createElement('div');
+        div.textContent = tipo === 'menu' ? `${resultado.nombre} ${resultado.apellidos}` : resultado.correoEduca;
+        div.onclick = () => {
+          inputElement.value = tipo === 'menu' ? `${resultado.nombre} ${resultado.apellidos}` : resultado.correoEduca;
+          sugerencias.innerHTML = '';
+        };
+        sugerencias.appendChild(div);
+      });
+    }
+
+    // Función para limpiar texto
+    function limpiarTexto(texto) {
+      return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    // Datos de prueba
+      const empleados = [
+      { apellidos: 'Silva, Margareto', nombre: 'Luis', correoEduca: 'lasilva@educa.jcyl.es', correoPersonal: 'ocypusolens@gmail.com', centro: 'IES Condesa Eylo Alfonso', idCentro: '47006533' },
+      { apellidos: 'Calvo, Ordax', nombre: 'Marieta', correoEduca: 'mccalvoo@educa.jcyl.es', correoPersonal: 'marietaalejandria@gmail.com', centro: 'IES Condesa Eylo Alfonso', idCentro: '47006533' },
+      { apellidos: 'Perez, Sainz', nombre: 'Eva Cristina', correoEduca: 'ecperezs@educa.jcyl.es', correoPersonal: 'evacpsainz@gmail.com', centro: 'IES Condesa Eylo Alfonso', idCentro: '47006533' },
+      { apellidos: 'Pons, Arroyo', nombre: 'Maialen', correoEduca: 'maialen.ponarr@educa.jcyl.es', correoPersonal: 'maialen_pons@hotmail.com', centro: 'IES Condesa Eylo Alfonso', idCentro: '47006533' }, 
+      { apellidos: 'Martin, Ortiz', nombre: 'M Fuencisla', correoEduca: 'mfuencisla.marort@educa.jcyl.es', correoPersonal: 'fumaor68@gmail.com', centro: 'IES Condesa Eylo Alfonso', idCentro: '47006533' },
+      { apellidos: 'Duran, Villar', nombre: 'Maria Reyes', correoEduca: 'mrduran@educa.jcyl.es', correoPersonal: 'pinarubia68@gmail.com', centro: 'IES Condesa Eylo Alfonso', idCentro: '47006533'},
+      { apellidos: 'Fernandez, Alvarez', nombre: 'Ana', correoEduca: 'afernandezalvarez23@educa.jcyl.es', correoPersonal: 'fernandez.74@gmail.com', centro: 'IES Condesa Eylo Alfonso', idCentro: '47006533'}
+    
+    
+    
+    
+    ];
+  </script>
+</body>
+</html>
