@@ -65,7 +65,7 @@ app.post('/login', async (req, res) => {
   }
 
   // Crear un token con JWT (en este caso el token es solo un ejemplo)
-  const token = jwt.sign({ username: user.username }, 'tu_clave_secreta', { expiresIn: '1h' });
+  const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
   res.json({
     message: 'Login exitoso',
@@ -87,7 +87,8 @@ app.post('/buscar-correo', async (req, res) => {
 
   try {
     // Verificar el token
-    const decoded = jwt.verify(token, 'tu_clave_secreta');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
     
     // Si el token es válido, proceder con la búsqueda
     const { correoEduca } = req.body;
